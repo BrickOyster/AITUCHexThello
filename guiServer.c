@@ -271,6 +271,42 @@ void playRandom( void )
 
 }
 
+void playMinmax( void )
+{
+	int i,j;
+	printf( "MINMAX!\n" );
+	tempMove.color = gamePosition.turn;
+	//random player ----
+	if( !canMove( &gamePosition, gamePosition.turn ) )
+	{
+		tempMove.tile[ 0 ] = NULL_MOVE;	//null move
+	}
+	else
+	{
+		while( 1 )
+		{
+
+			i = rand() % ARRAY_BOARD_SIZE;
+			j = rand() % ARRAY_BOARD_SIZE;
+
+			if( gamePosition.board[ i ][ j ] == EMPTY )
+			{
+				tempMove.tile[ 0 ] = i;
+				tempMove.tile[ 1 ] = j;
+				if( isLegalMove( &gamePosition, &tempMove ) )
+					break;
+			}
+		}
+	}
+	//end of random ----
+
+	doMove( &gamePosition, &tempMove );
+	printPosition( &gamePosition );
+	printToGui();
+
+	checkVictoryAndSendMove();
+
+}
 /**********************************************************/
 void checkVictoryAndSendMove( void )
 {
@@ -322,7 +358,7 @@ void checkVictoryAndSendMove( void )
 	if( gamePosition.turn == WHITE )
 	{
 
-		if( whitePlayerValue > 1)
+		if( whitePlayerValue > 2)
 		{
 			if( sendMsgGS( NM_PREPARE_TO_RECEIVE_MOVE, externalPlayers[ whitePlayerValue ].playerSocket ) < 0 )
 				return;
@@ -333,6 +369,13 @@ void checkVictoryAndSendMove( void )
 			if( stopFlag == 0 )
 				if( sendMsgGS( NM_REQUEST_MOVE, externalPlayers[ whitePlayerValue ].playerSocket ) < 0 )
 					return;
+		}
+		else if(whitePlayerValue == 2 && stopFlag == 0 )
+		{
+			while( gtk_events_pending() )
+				gtk_main_iteration_do( FALSE );
+			playMinmax();
+
 		}
 		else if(whitePlayerValue == 1 && stopFlag == 0 )
 		{
@@ -345,7 +388,7 @@ void checkVictoryAndSendMove( void )
 	}
 	else if( gamePosition.turn == BLACK)
 	{
-		if( blackPlayerValue > 1)
+		if( blackPlayerValue > 2)
 		{
 			if( sendMsgGS( NM_PREPARE_TO_RECEIVE_MOVE, externalPlayers[ blackPlayerValue ].playerSocket ) < 0 )
 				return;
@@ -356,6 +399,13 @@ void checkVictoryAndSendMove( void )
 			if( stopFlag == 0 )
 				if( sendMsgGS( NM_REQUEST_MOVE, externalPlayers[ blackPlayerValue ].playerSocket ) < 0 )
 					return;
+		}
+		else if( blackPlayerValue == 2 && stopFlag == 0 )
+		{
+			while( gtk_events_pending() )
+				gtk_main_iteration_do( FALSE );
+			playMinmax();
+
 		}
 		else if( blackPlayerValue == 1 && stopFlag == 0 )
 		{
@@ -380,18 +430,18 @@ void messageFromSocket( void )
 
 	if( gamePosition.turn == WHITE )
 	{
-		if( whitePlayerValue > 1 )
+		if( whitePlayerValue > 2 )
 			playingPlayer = &externalPlayers[ whitePlayerValue ];
 
-		if( blackPlayerValue > 1 )
+		if( blackPlayerValue > 2 )
 			waitingPlayer = &externalPlayers[ blackPlayerValue ];
 	}
 	else
 	{
-		if( blackPlayerValue > 1 )
+		if( blackPlayerValue > 2 )
 			playingPlayer = &externalPlayers[ blackPlayerValue ];
 
-		if( whitePlayerValue > 1 )
+		if( whitePlayerValue > 2 )
 			waitingPlayer = &externalPlayers[ whitePlayerValue ];
 	}
 
@@ -569,7 +619,6 @@ void tile_selected( GtkWidget *widget, GdkEventButton *event, gpointer data )
 /**********************************************************/
 void whiteCombo_changed( void )
 {
-
 	whitePlayerValue = gtk_combo_box_get_active( GTK_COMBO_BOX( whiteCombo ) );
 
 	//determine if disconnect should be enabled
@@ -593,7 +642,7 @@ void whiteCombo_changed( void )
 	while( gtk_events_pending() )
 		gtk_main_iteration_do( FALSE );
 
-	if( gtk_combo_box_get_active( GTK_COMBO_BOX( whiteCombo ) ) > 1 )
+	if( gtk_combo_box_get_active( GTK_COMBO_BOX( whiteCombo ) ) > 2 )
 	{
 
 		externalPlayers[ whitePlayerValue ].color = WHITE;
@@ -656,7 +705,7 @@ void blackCombo_changed( void )
 	while( gtk_events_pending() )
 		gtk_main_iteration_do( FALSE );
 
-	if( gtk_combo_box_get_active( GTK_COMBO_BOX( blackCombo ) ) > 1 )
+	if( gtk_combo_box_get_active( GTK_COMBO_BOX( blackCombo ) ) > 2 )
 	{
 
 		externalPlayers[ blackPlayerValue ].color = BLACK;
@@ -716,7 +765,15 @@ void playButton_clicked( void )
 			return;
 
 		}
-		else if( whitePlayerValue > 1 )	//external
+		else if( whitePlayerValue == 2 )	//minmax
+		{
+			while( gtk_events_pending() )
+				gtk_main_iteration_do( FALSE );
+			playMinmax();
+			return;
+
+		}
+		else if( whitePlayerValue > 2 )	//external
 		{
 			sendMsgGS( NM_REQUEST_MOVE, externalPlayers[ whitePlayerValue ].playerSocket );
 			return;
@@ -732,7 +789,14 @@ void playButton_clicked( void )
 			playRandom();
 			return;
 		}
-		else if( blackPlayerValue > 1 )	//external
+		else if( blackPlayerValue == 2 )	//random
+		{
+			while( gtk_events_pending() )
+				gtk_main_iteration_do( FALSE );
+			playMinmax();
+			return;
+		}
+		else if( blackPlayerValue > 2 )	//external
 		{
 			sendMsgGS( NM_REQUEST_MOVE, externalPlayers[ blackPlayerValue ].playerSocket );
 			return;
@@ -773,10 +837,10 @@ void stopButton_clicked( void )
 	gtk_widget_set_sensitive( GTK_WIDGET( whiteCombo ), TRUE );
 	gtk_widget_set_sensitive( GTK_WIDGET( blackCombo ), TRUE );
 
-	if( whitePlayerValue > 1 )		//only in case we have external player
+	if( whitePlayerValue > 2 )		//only in case we have external player
 		gtk_widget_set_sensitive( GTK_WIDGET( whiteDcButton ), TRUE );
 
-	if( blackPlayerValue > 1 )		//only in case we have external player
+	if( blackPlayerValue > 2 )		//only in case we have external player
 		gtk_widget_set_sensitive( GTK_WIDGET( blackDcButton ), TRUE );
 
 }
@@ -793,7 +857,7 @@ void resetButton_clicked( void )
 	printToGui();
 
 	//inform external players (if they are playing)
-	if( whitePlayerValue > 1 )
+	if( whitePlayerValue > 2 )
 	{
 		if( sendMsgGS( NM_NEW_POSITION, externalPlayers[ whitePlayerValue ].playerSocket ) < 0 )
 			return;
@@ -801,7 +865,7 @@ void resetButton_clicked( void )
 			return;
 	}
 
-	if( blackPlayerValue > 1 )
+	if( blackPlayerValue > 2 )
 	{
 		if( sendMsgGS( NM_NEW_POSITION, externalPlayers[ blackPlayerValue ].playerSocket ) < 0 )
 			return;
@@ -1253,12 +1317,14 @@ int main( int argc, char *argv[] )
 	whiteCombo = gtk_combo_box_new_text();
 	gtk_combo_box_append_text( GTK_COMBO_BOX( whiteCombo ), "Human" );
 	gtk_combo_box_append_text( GTK_COMBO_BOX( whiteCombo ), "Random" );
+	gtk_combo_box_append_text( GTK_COMBO_BOX( whiteCombo ), "MinMax" );
 	gtk_combo_box_set_active( GTK_COMBO_BOX( whiteCombo ), 0 );
 
 	//blackCombo
 	blackCombo = gtk_combo_box_new_text();
 	gtk_combo_box_append_text( GTK_COMBO_BOX( blackCombo), "Human" );
 	gtk_combo_box_append_text( GTK_COMBO_BOX( blackCombo), "Random" );
+	gtk_combo_box_append_text( GTK_COMBO_BOX( blackCombo), "MinMax" );
 	gtk_combo_box_set_active( GTK_COMBO_BOX( blackCombo), 0 );
 
 	//whiteCombo and blackCombo sizes
@@ -1311,6 +1377,11 @@ int main( int argc, char *argv[] )
 		{
 			externalPlayers[ i ].connected = 1;
 			sprintf( externalPlayers[ i ].name, "Random" );
+		}
+		else if( i == 2 )	//minmax
+		{
+			externalPlayers[ i ].connected = 1;
+			sprintf( externalPlayers[ i ].name, "MinMax" );
 		}
 		else	//external
 			externalPlayers[ i ].connected = 0;

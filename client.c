@@ -22,17 +22,60 @@ char * agentName = "MyAgent!";		//default name.. change it! keep in mind MAX_NAM
 char * ip = "127.0.0.1";	// default ip (local machine)
 /**********************************************************/
 
+/*
+ * Random player 
+ * - not the most efficient implementation
+ */
+void playRandom( void )
+{
+	int i,j;
+
+	while( 1 )
+	{
+		i = rand() % ARRAY_BOARD_SIZE;
+		j = rand() % ARRAY_BOARD_SIZE;
+
+		if( gamePosition.board[ i ][ j ] == EMPTY )
+		{
+			myMove.tile[ 0 ] = i;
+			myMove.tile[ 1 ] = j;
+			if( isLegalMove( &gamePosition, &myMove ) )
+				break;
+		}
+	}
+}
+
+void playMinmax( void )
+{
+	int i,j;
+
+	while( 1 )
+	{
+		i = rand() % ARRAY_BOARD_SIZE;
+		j = rand() % ARRAY_BOARD_SIZE;
+
+		if( gamePosition.board[ i ][ j ] == EMPTY )
+		{
+			myMove.tile[ 0 ] = i;
+			myMove.tile[ 1 ] = j;
+			if( isLegalMove( &gamePosition, &myMove ) )
+				break;
+		}
+	}
+}
 
 int main( int argc, char ** argv )
 {
 	int c;
+	void (*playMove)();
 	opterr = 0;
+	playMove = playRandom;
 
-	while( ( c = getopt ( argc, argv, "i:p:h" ) ) != -1 )
+	while( ( c = getopt ( argc, argv, "i:p:n:m:h" ) ) != -1 )
 		switch( c )
 		{
 			case 'h':
-				printf( "[-i ip] [-p port]\n" );
+				printf( "[-i ip] [-p port] [-n name] [-m mode]\n(Name max %d chars)\n(Mode \"rnd\" or \"max\")\n", MAX_NAME_LENGTH );
 				return 0;
 			case 'i':
 				ip = optarg;
@@ -40,8 +83,15 @@ int main( int argc, char ** argv )
 			case 'p':
 				port = optarg;
 				break;
+			case 'n':
+				agentName = optarg;
+				break;
+			case 'm':
+				if (strcmp("max",optarg) != 0) { playMove = playRandom; }
+				else { playMove = playMinmax; };
+				break;
 			case '?':
-				if( optopt == 'i' || optopt == 'p' )
+				if( optopt == 'i' || optopt == 'p' || optopt == 'n' || optopt == 'm' )
 					printf( "Option -%c requires an argument.\n", ( char ) optopt );
 				else if( isprint( optopt ) )
 					printf( "Unknown option -%c\n", ( char ) optopt );
@@ -57,7 +107,6 @@ int main( int argc, char ** argv )
 /**********************************************************/
 // used in random
 	srand( time( NULL ) );
-	int i, j;
 /**********************************************************/
 
 	while( 1 )
@@ -101,27 +150,7 @@ int main( int argc, char ** argv )
 				}
 				else
 				{
-
-
-/**********************************************************/
-// random player - not the most efficient implementation
-					while( 1 )
-					{
-						i = rand() % ARRAY_BOARD_SIZE;
-						j = rand() % ARRAY_BOARD_SIZE;
-
-						if( gamePosition.board[ i ][ j ] == EMPTY )
-						{
-							myMove.tile[ 0 ] = i;
-							myMove.tile[ 1 ] = j;
-							if( isLegalMove( &gamePosition, &myMove ) )
-								break;
-						}
-					}
-
-// end of random
-/**********************************************************/
-
+					playMove();
 				}
 
 				sendMove( &myMove, mySocket );			//send our move

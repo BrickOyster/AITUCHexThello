@@ -1,4 +1,4 @@
-all: client server
+all: client server guiServer
 
 guiServer: board comm gameServer guiServer.h global.h
 	gcc -o guiServer guiServer.c board.o comm.o gameServer.o `pkg-config --libs --cflags gtk+-2.0`
