@@ -10,15 +10,21 @@ Requirements:
 
 Compilation:
 
-* make [all]  - to build client and server
+* make [all]  - to build client, server and guiServer
 * make client - to build just the client
 * make server - to build just the server
+* make guiServer - to build just the guiServer
 
 Execution:
 
 ./guiServer
 ./server [-p port] [-g number_of_games] [-s (swap color after each game)]
-./client [-i ip] [-p port]
+./client [-i ip] [-p port] [-n name] [-m mode]
 
 --------------------------------------------------
 
+Assignment implementation:
+
+Added extra options to client and 2nd ai agent algorithm to client and guiServer.
+
+--------------------------------------------------

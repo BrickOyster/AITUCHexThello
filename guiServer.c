@@ -271,42 +271,72 @@ void playRandom( void )
 
 }
 
-void playMinmax( void )
-{
-	int i,j;
-	printf( "MINMAX!\n" );
-	tempMove.color = gamePosition.turn;
-	//random player ----
-	if( !canMove( &gamePosition, gamePosition.turn ) )
-	{
-		tempMove.tile[ 0 ] = NULL_MOVE;	//null move
-	}
-	else
-	{
-		while( 1 )
-		{
-
-			i = rand() % ARRAY_BOARD_SIZE;
-			j = rand() % ARRAY_BOARD_SIZE;
-
-			if( gamePosition.board[ i ][ j ] == EMPTY )
-			{
-				tempMove.tile[ 0 ] = i;
-				tempMove.tile[ 1 ] = j;
-				if( isLegalMove( &gamePosition, &tempMove ) )
-					break;
-			}
-		}
-	}
-	//end of random ----
-
-	doMove( &gamePosition, &tempMove );
-	printPosition( &gamePosition );
-	printToGui();
-
-	checkVictoryAndSendMove();
-
+int evaluatePosition(Position *pos, char color) {
+    return pos->score[color] - pos->score[getOtherSide(color)];
 }
+
+int minimax(Position *pos, int depth, char maximizingPlayer, char originalPlayer) {
+    if (depth == 0 || !canMove(pos, WHITE) && !canMove(pos, BLACK)) {
+        return evaluatePosition(pos, originalPlayer);
+    }
+
+    if (maximizingPlayer == originalPlayer) {
+        int maxEval = -10000;
+        for (int i = 0; i < ARRAY_BOARD_SIZE; i++) {
+            for (int j = 0; j < ARRAY_BOARD_SIZE; j++) {
+                if (isLegal(pos, i, j, maximizingPlayer)) {
+                    Position newPos = *pos;
+                    Move move = {{i, j}, maximizingPlayer};
+                    doMove(&newPos, &move);
+                    int eval = minimax(&newPos, depth - 1, getOtherSide(maximizingPlayer), originalPlayer);
+                    maxEval = (eval > maxEval) ? eval : maxEval;
+                }
+            }
+        }
+        return maxEval;
+    } else {
+        int minEval = 10000;
+        for (int i = 0; i < ARRAY_BOARD_SIZE; i++) {
+            for (int j = 0; j < ARRAY_BOARD_SIZE; j++) {
+                if (isLegal(pos, i, j, maximizingPlayer)) {
+                    Position newPos = *pos;
+                    Move move = {{i, j}, maximizingPlayer};
+                    doMove(&newPos, &move);
+                    int eval = minimax(&newPos, depth - 1, getOtherSide(maximizingPlayer), originalPlayer);
+                    minEval = (eval < minEval) ? eval : minEval;
+                }
+            }
+        }
+        return minEval;
+    }
+}
+
+void playMinmax(void) {
+    int bestValue = -10000;
+    Move bestMove = {{NULL_MOVE, NULL_MOVE}, gamePosition.turn};
+
+    for (int i = 0; i < ARRAY_BOARD_SIZE; i++) {
+        for (int j = 0; j < ARRAY_BOARD_SIZE; j++) {
+            if (isLegal(&gamePosition, i, j, gamePosition.turn)) {
+                Position newPos = gamePosition;
+                Move move = {{i, j}, gamePosition.turn};
+                doMove(&newPos, &move);
+                int moveValue = minimax(&newPos, 3, getOtherSide(gamePosition.turn), gamePosition.turn);
+                if (moveValue > bestValue) {
+                    bestValue = moveValue;
+                    bestMove = move;
+                }
+            }
+        }
+    }
+
+    tempMove = bestMove;
+    doMove(&gamePosition, &tempMove);
+    printPosition(&gamePosition);
+    printToGui();
+    checkVictoryAndSendMove();
+}
+
 /**********************************************************/
 void checkVictoryAndSendMove( void )
 {

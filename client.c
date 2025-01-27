@@ -45,23 +45,66 @@ void playRandom( void )
 	}
 }
 
-void playMinmax( void )
-{
-	int i,j;
+int evaluatePosition(Position *pos, char color) {
+    return pos->score[color] - pos->score[getOtherSide(color)];
+}
 
-	while( 1 )
-	{
-		i = rand() % ARRAY_BOARD_SIZE;
-		j = rand() % ARRAY_BOARD_SIZE;
+int minimax(Position *pos, int depth, char maximizingPlayer, char originalPlayer) {
+    if (depth == 0 || !canMove(pos, WHITE) && !canMove(pos, BLACK)) {
+        return evaluatePosition(pos, originalPlayer);
+    }
 
-		if( gamePosition.board[ i ][ j ] == EMPTY )
-		{
-			myMove.tile[ 0 ] = i;
-			myMove.tile[ 1 ] = j;
-			if( isLegalMove( &gamePosition, &myMove ) )
-				break;
-		}
-	}
+    if (maximizingPlayer == originalPlayer) {
+        int maxEval = -10000;
+        for (int i = 0; i < ARRAY_BOARD_SIZE; i++) {
+            for (int j = 0; j < ARRAY_BOARD_SIZE; j++) {
+                if (isLegal(pos, i, j, maximizingPlayer)) {
+                    Position newPos = *pos;
+                    Move move = {{i, j}, maximizingPlayer};
+                    doMove(&newPos, &move);
+                    int eval = minimax(&newPos, depth - 1, getOtherSide(maximizingPlayer), originalPlayer);
+                    maxEval = (eval > maxEval) ? eval : maxEval;
+                }
+            }
+        }
+        return maxEval;
+    } else {
+        int minEval = 10000;
+        for (int i = 0; i < ARRAY_BOARD_SIZE; i++) {
+            for (int j = 0; j < ARRAY_BOARD_SIZE; j++) {
+                if (isLegal(pos, i, j, maximizingPlayer)) {
+                    Position newPos = *pos;
+                    Move move = {{i, j}, maximizingPlayer};
+                    doMove(&newPos, &move);
+                    int eval = minimax(&newPos, depth - 1, getOtherSide(maximizingPlayer), originalPlayer);
+                    minEval = (eval < minEval) ? eval : minEval;
+                }
+            }
+        }
+        return minEval;
+    }
+}
+
+void playMinmax(void) {
+    int bestValue = -10000;
+    Move bestMove = {{NULL_MOVE, NULL_MOVE}, myColor};
+
+    for (int i = 0; i < ARRAY_BOARD_SIZE; i++) {
+        for (int j = 0; j < ARRAY_BOARD_SIZE; j++) {
+            if (isLegal(&gamePosition, i, j, myColor)) {
+                Position newPos = gamePosition;
+                Move move = {{i, j}, myColor};
+                doMove(&newPos, &move);
+                int moveValue = minimax(&newPos, 3, getOtherSide(myColor), myColor);
+                if (moveValue > bestValue) {
+                    bestValue = moveValue;
+                    bestMove = move;
+                }
+            }
+        }
+    }
+
+    myMove = bestMove;
 }
 
 int main( int argc, char ** argv )
