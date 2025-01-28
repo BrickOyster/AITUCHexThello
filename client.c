@@ -17,7 +17,7 @@ char myColor;				// to store our color
 int mySocket;				// our socket
 char msg;					// used to store the received message
 
-char * agentName = "MyAgent!";		//default name.. change it! keep in mind MAX_NAME_LENGTH
+char * agentName = "dker0028";		//default name.. change it! keep in mind MAX_NAME_LENGTH
 
 char * ip = "127.0.0.1";	// default ip (local machine)
 /**********************************************************/
@@ -112,13 +112,13 @@ int main( int argc, char ** argv )
 	int c;
 	void (*playMove)();
 	opterr = 0;
-	playMove = playRandom;
+	playMove = playMinmax;
 
-	while( ( c = getopt ( argc, argv, "i:p:n:m:h" ) ) != -1 )
+	while( ( c = getopt ( argc, argv, "i:p:n:rh" ) ) != -1 )
 		switch( c )
 		{
 			case 'h':
-				printf( "[-i ip] [-p port] [-n name] [-m mode]\n(Name max %d chars)\n(Mode \"rnd\" or \"max\")\n", MAX_NAME_LENGTH );
+				printf( "[-i ip] [-p port] [-n name] [-r]\n/ Name max %d chars\n/ -r activates random instead of minimax\n", MAX_NAME_LENGTH );
 				return 0;
 			case 'i':
 				ip = optarg;
@@ -129,12 +129,11 @@ int main( int argc, char ** argv )
 			case 'n':
 				agentName = optarg;
 				break;
-			case 'm':
-				if (strcmp("max",optarg) != 0) { playMove = playRandom; }
-				else { playMove = playMinmax; };
+			case 'r':
+				playMove = playRandom;
 				break;
 			case '?':
-				if( optopt == 'i' || optopt == 'p' || optopt == 'n' || optopt == 'm' )
+				if( optopt == 'i' || optopt == 'p' || optopt == 'n' )
 					printf( "Option -%c requires an argument.\n", ( char ) optopt );
 				else if( isprint( optopt ) )
 					printf( "Unknown option -%c\n", ( char ) optopt );
