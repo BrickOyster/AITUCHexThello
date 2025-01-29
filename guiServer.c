@@ -379,7 +379,7 @@ void playMinmax( void ) {
             if (isLegal(&gamePosition, i, j, gamePosition.turn)) {
                 Position newPos = gamePosition; Move move = {{i, j}, gamePosition.turn};
                 doMove(&newPos, &move);
-                int moveValue = minimax(&newPos, 3, -100000, 100000, getOtherSide(gamePosition.turn), gamePosition.turn);
+                int moveValue = minimax(&newPos, 4, -100000, 100000, getOtherSide(gamePosition.turn), gamePosition.turn);
                 if (moveValue >= bestValue) {
                     bestValue = moveValue;
                     bestMove = move;
