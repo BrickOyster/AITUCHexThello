@@ -22,6 +22,7 @@ char * agentName = "dker0028";		//default name.. change it! keep in mind MAX_NAM
 char * ip = "127.0.0.1";	// default ip (local machine)
 /**********************************************************/
 
+int prune = 0;
 /*
  * Random player 
  * - not the most efficient implementation
@@ -45,39 +46,89 @@ void playRandom( void )
 	}
 }
 
-int evaluatePosition(Position *pos, char color) {
-    return pos->score[color] - pos->score[getOtherSide(color)];
+int evaluatePosition(Position *pos, char color,
+					 int difweight, int mobilityweight, int stabilityweight) {
+	int score = 0;
+    int opponent = getOtherSide(color);
+
+    // Basic score difference
+    score += (pos->score[color] - pos->score[opponent]) * difweight;
+
+    // Mobility
+    int myMobility = 0;
+    int opponentMobility = 0;
+    for (int i = 0; i < ARRAY_BOARD_SIZE; i++) {
+        for (int j = 0; j < ARRAY_BOARD_SIZE; j++) {
+            if (isLegal(pos, i, j, color)) { myMobility++; }
+            if (isLegal(pos, i, j, opponent)) { opponentMobility++; }
+        }
+    } score += (myMobility - opponentMobility) * mobilityweight;
+
+    // Stability (corners and edges)
+    int stability = 0;
+	int c = 10, e = 5, m = 3; // Weights for diferent positions in the board
+    int stabilityWeights[ARRAY_BOARD_SIZE][ARRAY_BOARD_SIZE] = {
+        {  0,  0,  0,  0,  0,  0,  0,  c,  e,  e,  e,  e,  e,  e,  c },
+        {  0,  0,  0,  0,  0,  0,  e, -c, -e, -e, -e, -e, -e, -c,  5 },
+        {  0,  0,  0,  0,  0,  e, -e,  m,  m,  m,  m,  m,  m, -e,  5 },
+        {  0,  0,  0,  0,  e, -e,  m,  m,  m,  m,  m,  m,  m, -e,  5 },
+        {  0,  0,  0,  e, -e,  m,  m,  0,  m,  m,  m,  m,  m, -e,  5 },
+        {  0,  0,  e, -e,  m,  m,  0,  0,  0,  m,  m,  m,  m, -e,  5 },
+        {  0,  e, -e,  m,  m,  0,  0,  0,  0,  0,  m,  m,  m, -e,  5 },
+        {  c, -c,  m,  m,  0,  0,  0,  0,  0,  0,  0,  m,  m, -c,  c },
+        {  e, -e,  m,  m,  m,  0,  0,  0,  0,  0,  m,  m, -e,  e,  0 },
+        {  e, -e,  m,  m,  m,  m,  0,  0,  0,  m,  m, -e,  e,  0,  0 },
+        {  e, -e,  m,  m,  m,  m,  m,  0,  m,  m, -e,  e,  0,  0,  0 },
+        {  e, -e,  m,  m,  m,  m,  m,  m,  m, -e,  e,  0,  0,  0,  0 },
+        {  e, -e,  m,  m,  m,  m,  m,  m, -e,  e,  0,  0,  0,  0,  0 },
+        {  e, -c, -e, -e, -e, -e, -e, -c,  e,  0,  0,  0,  0,  0,  0 },
+        {  c,  e,  e,  e,  e,  e,  e,  c,  0,  0,  0,  0,  0,  0,  0 }
+    };
+    for (int i = 0; i < ARRAY_BOARD_SIZE; i++) {
+        for (int j = 0; j < ARRAY_BOARD_SIZE; j++) {
+            if (pos->board[i][j] == color) { stability += stabilityWeights[i][j]; }
+			else if (pos->board[i][j] == opponent) { stability -= stabilityWeights[i][j]; }
+        }
+    } score += stability * stabilityweight;
+
+    return score;
 }
 
-int minimax(Position *pos, int depth, char maximizingPlayer, char originalPlayer) {
+int minimax(Position *pos, int depth, int alpha, int beta, char maximizingPlayer, char originalPlayer) {
     if (depth == 0 || !canMove(pos, WHITE) && !canMove(pos, BLACK)) {
-        return evaluatePosition(pos, originalPlayer);
+        return evaluatePosition(pos, originalPlayer,10,5,3);
     }
 
     if (maximizingPlayer == originalPlayer) {
-        int maxEval = -10000;
+        int maxEval = -100000;
         for (int i = 0; i < ARRAY_BOARD_SIZE; i++) {
             for (int j = 0; j < ARRAY_BOARD_SIZE; j++) {
                 if (isLegal(pos, i, j, maximizingPlayer)) {
-                    Position newPos = *pos;
-                    Move move = {{i, j}, maximizingPlayer};
+                    Position newPos = *pos; Move move = {{i, j}, maximizingPlayer};
                     doMove(&newPos, &move);
-                    int eval = minimax(&newPos, depth - 1, getOtherSide(maximizingPlayer), originalPlayer);
+                    int eval = minimax(&newPos, depth - 1, alpha, beta, getOtherSide(maximizingPlayer), originalPlayer);
                     maxEval = (eval > maxEval) ? eval : maxEval;
+                    alpha = (alpha > eval) ? alpha : eval;
+                    if (beta <= alpha && prune) {
+                        break;
+                    }
                 }
             }
         }
         return maxEval;
     } else {
-        int minEval = 10000;
+        int minEval = 100000;
         for (int i = 0; i < ARRAY_BOARD_SIZE; i++) {
             for (int j = 0; j < ARRAY_BOARD_SIZE; j++) {
                 if (isLegal(pos, i, j, maximizingPlayer)) {
-                    Position newPos = *pos;
-                    Move move = {{i, j}, maximizingPlayer};
+                    Position newPos = *pos; Move move = {{i, j}, maximizingPlayer};
                     doMove(&newPos, &move);
-                    int eval = minimax(&newPos, depth - 1, getOtherSide(maximizingPlayer), originalPlayer);
+                    int eval = minimax(&newPos, depth - 1, alpha, beta, getOtherSide(maximizingPlayer), originalPlayer);
                     minEval = (eval < minEval) ? eval : minEval;
+                    beta = (beta < eval) ? beta : eval;
+                    if (beta <= alpha && prune) {
+                        break;
+                    }
                 }
             }
         }
@@ -85,18 +136,17 @@ int minimax(Position *pos, int depth, char maximizingPlayer, char originalPlayer
     }
 }
 
-void playMinmax(void) {
-    int bestValue = -10000;
+void playMinmax( void ) {
+    int bestValue = -100000;
     Move bestMove = {{NULL_MOVE, NULL_MOVE}, myColor};
 
     for (int i = 0; i < ARRAY_BOARD_SIZE; i++) {
         for (int j = 0; j < ARRAY_BOARD_SIZE; j++) {
             if (isLegal(&gamePosition, i, j, myColor)) {
-                Position newPos = gamePosition;
-                Move move = {{i, j}, myColor};
+                Position newPos = gamePosition; Move move = {{i, j}, myColor};
                 doMove(&newPos, &move);
-                int moveValue = minimax(&newPos, 3, getOtherSide(myColor), myColor);
-                if (moveValue > bestValue) {
+                int moveValue = minimax(&newPos, 3, -100000, 100000, getOtherSide(myColor), myColor);
+                if (moveValue >= bestValue) {
                     bestValue = moveValue;
                     bestMove = move;
                 }
@@ -114,11 +164,11 @@ int main( int argc, char ** argv )
 	opterr = 0;
 	playMove = playMinmax;
 
-	while( ( c = getopt ( argc, argv, "i:p:n:rh" ) ) != -1 )
+	while( ( c = getopt ( argc, argv, "i:p:n:rth" ) ) != -1 )
 		switch( c )
 		{
 			case 'h':
-				printf( "[-i ip] [-p port] [-n name] [-r]\n/ Name max %d chars\n/ -r activates random instead of minimax\n", MAX_NAME_LENGTH );
+				printf( "[-i ip] [-p port] [-n name] [-r] [-t]\n/ Name max %d chars\n/ -r activates random instead of minimax\n/ -t deactivates pruning\n", MAX_NAME_LENGTH );
 				return 0;
 			case 'i':
 				ip = optarg;
@@ -131,6 +181,9 @@ int main( int argc, char ** argv )
 				break;
 			case 'r':
 				playMove = playRandom;
+				break;
+			case 't':
+				prune = 1;
 				break;
 			case '?':
 				if( optopt == 'i' || optopt == 'p' || optopt == 'n' )
@@ -210,7 +263,39 @@ int main( int argc, char ** argv )
 	return 0;
 }
 
+/*
+        B B B B B B B B 
+       B B B B B B B B B 
+      W B W W W W B B B B 
+     W W B B W W W B B B B 
+    W B W B B W W W B B B B 
+   W B W B B B W B W W B W B 
+  W B W B B B B B B W W W W B 
+ W W W B W W W W W W W W W W B 
+  W W B B W W W B W B W W B B 
+   W B B W W W B B B B B B B 
+    W B B W W B B B W W B B 
+     W B W W W W W W W B B 
+      W B W W W B W W B B 
+       W B W W W W W B B 
+        W B B B B B B B
 
+        B B B B B B B B 
+       B B B B B B B B B 
+      W B W W W W B B B B 
+     W W B B W W W B B B B 
+    W B W B B W W W B B B B 
+   W B W B B B W B W W B W B 
+  W B W B B B B B B W W W W B 
+ W W W B W W W W W W W W W W B 
+  W W B B W W W B W B W W B B 
+   W B B W W W B B B B B B B 
+    W B B W W B B B W W B B 
+     W B W W W W W W W B B 
+      W B W W W B W W B B 
+       W B W W W W W B B 
+        W B B B B B B B		
+*/
 
 
 

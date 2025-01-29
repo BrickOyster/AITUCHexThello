@@ -19,12 +19,19 @@ Execution:
 
 ./guiServer
 ./server [-p port] [-g number_of_games] [-s (swap color after each game)]
-./client [-i ip] [-p port] [-n name] [-m mode]
+./client [-i ip] [-p port] [-n name] [-r (use random instaid of minimax)] [-t (deactivate pruning)]
 
 --------------------------------------------------
 
 Assignment implementation:
 
-Added extra options to client and 2nd ai agent algorithm to client and guiServer.
+Added extra options to client 
 
+2nd ai agent guiServer.
+
+Implemented minimax algorithm on client and 2nd agent of guiServer
+
+Made advanced evaluation function tailored to the game
+
+Implemented ab-pruning for the minimax algorithm
 --------------------------------------------------
