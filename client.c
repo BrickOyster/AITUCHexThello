@@ -109,9 +109,7 @@ int minimax(Position *pos, int depth, int alpha, int beta, char maximizingPlayer
                     int eval = minimax(&newPos, depth - 1, alpha, beta, getOtherSide(maximizingPlayer), originalPlayer);
                     maxEval = (eval > maxEval) ? eval : maxEval;
                     alpha = (alpha > eval) ? alpha : eval;
-                    if (beta <= alpha && prune) {
-                        break;
-                    }
+                    if (beta <= alpha && prune) { break; }
                 }
             }
         }
@@ -126,9 +124,7 @@ int minimax(Position *pos, int depth, int alpha, int beta, char maximizingPlayer
                     int eval = minimax(&newPos, depth - 1, alpha, beta, getOtherSide(maximizingPlayer), originalPlayer);
                     minEval = (eval < minEval) ? eval : minEval;
                     beta = (beta < eval) ? beta : eval;
-                    if (beta <= alpha && prune) {
-                        break;
-                    }
+                    if (beta <= alpha && prune) { break; }
                 }
             }
         }
@@ -262,41 +258,20 @@ int main( int argc, char ** argv )
 
 	return 0;
 }
-
 /*
-        B B B B B B B B 
-       B B B B B B B B B 
-      W B W W W W B B B B 
-     W W B B W W W B B B B 
-    W B W B B W W W B B B B 
-   W B W B B B W B W W B W B 
-  W B W B B B B B B W W W W B 
- W W W B W W W W W W W W W W B 
-  W W B B W W W B W B W W B B 
-   W B B W W W B B B B B B B 
-    W B B W W B B B W W B B 
-     W B W W W W W W W B B 
-      W B W W W B W W B B 
-       W B W W W W W B B 
-        W B B B B B B B
-
-        B B B B B B B B 
-       B B B B B B B B B 
-      W B W W W W B B B B 
-     W W B B W W W B B B B 
-    W B W B B W W W B B B B 
-   W B W B B B W B W W B W B 
-  W B W B B B B B B W W W W B 
- W W W B W W W W W W W W W W B 
-  W W B B W W W B W B W W B B 
-   W B B W W W B B B B B B B 
-    W B B W W B B B W W B B 
-     W B W W W W W W W B B 
-      W B W W W B W W B B 
-       W B W W W W W B B 
-        W B B B B B B B		
-*/
-
-
-
-
+ *        B B B B W W W W        *        B B B B W W W W        *
+ *       B B B B B B B B B       *       B B B B B B B B B       *
+ *      B W W B W W W W B B      *      B W W B W W W W B B      *
+ *     B W W W W W W W B W B     *     B W W W W W W W B W B     *
+ *    B W B B B W W W B B W B    *    B W B B B W W W B B W B    *
+ *   B B B B W B W B B W B W B   *   B B B B W B W B B W B W B   *
+ *  B B W B B B W W B W W B W B  *  B B W B B B W W B W W B W B  *
+ * W W W W W W W W B W W W W W B * W W W W W W W W B W W W W W B *
+ *  B B B W W W W B W W W W W B  *  B B B W W W W B W W W W W B  *
+ *   B W B W B B B W B B B B B   *   B W B W B B B W B B B B B   *
+ *    B W W B B B B W B B B B    *    B W W B B B B W B B B B    *
+ *     B W B B W B B W B B W     *     B W B B W B B W B B W     *
+ *      B B B B B B B B B W      *      B B B B B B B B B W      *
+ *       B B B B B B B B W       *       B B B B B B B B W       *
+ *        B B B B B B B W        *        B B B B B B B W        *
+ */
