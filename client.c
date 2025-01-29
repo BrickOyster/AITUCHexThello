@@ -141,7 +141,7 @@ void playMinmax( void ) {
             if (isLegal(&gamePosition, i, j, myColor)) {
                 Position newPos = gamePosition; Move move = {{i, j}, myColor};
                 doMove(&newPos, &move);
-                int moveValue = minimax(&newPos, 4, -100000, 100000, getOtherSide(myColor), myColor);
+                int moveValue = minimax(&newPos, 3, -100000, 100000, getOtherSide(myColor), myColor);
                 if (moveValue >= bestValue) {
                     bestValue = moveValue;
                     bestMove = move;
