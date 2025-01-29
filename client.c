@@ -23,6 +23,7 @@ char * ip = "127.0.0.1";	// default ip (local machine)
 /**********************************************************/
 
 int prune = 0;
+int maxDepth = 4;
 /*
  * Random player 
  * - not the most efficient implementation
@@ -141,7 +142,7 @@ void playMinmax( void ) {
             if (isLegal(&gamePosition, i, j, myColor)) {
                 Position newPos = gamePosition; Move move = {{i, j}, myColor};
                 doMove(&newPos, &move);
-                int moveValue = minimax(&newPos, 3, -100000, 100000, getOtherSide(myColor), myColor);
+                int moveValue = minimax(&newPos, maxDepth, -100000, 100000, getOtherSide(myColor), myColor);
                 if (moveValue >= bestValue) {
                     bestValue = moveValue;
                     bestMove = move;
@@ -160,7 +161,7 @@ int main( int argc, char ** argv )
 	opterr = 0;
 	playMove = playMinmax;
 
-	while( ( c = getopt ( argc, argv, "i:p:n:rth" ) ) != -1 )
+	while( ( c = getopt ( argc, argv, "i:p:n:d:rth" ) ) != -1 )
 		switch( c )
 		{
 			case 'h':
@@ -175,6 +176,9 @@ int main( int argc, char ** argv )
 			case 'n':
 				agentName = optarg;
 				break;
+			case 'd':
+				maxDepth = (int) optarg;
+				break;
 			case 'r':
 				playMove = playRandom;
 				break;
@@ -182,7 +186,7 @@ int main( int argc, char ** argv )
 				prune = 1;
 				break;
 			case '?':
-				if( optopt == 'i' || optopt == 'p' || optopt == 'n' )
+				if( optopt == 'i' || optopt == 'p' || optopt == 'n' || optopt == 'd' )
 					printf( "Option -%c requires an argument.\n", ( char ) optopt );
 				else if( isprint( optopt ) )
 					printf( "Unknown option -%c\n", ( char ) optopt );
