@@ -23,6 +23,7 @@ char * ip = "127.0.0.1";	// default ip (local machine)
 /**********************************************************/
 
 int prune = 0;
+
 /*
  * Random player 
  * - not the most efficient implementation
@@ -46,6 +47,15 @@ void playRandom( void )
 	}
 }
 
+/*
+ * Evaluation function for the minimax algorithm
+ * - difweight: weight for the score difference
+ * - mobilityweight: weight for the mobility
+ * - stabilityweight: weight for the stability
+ * - returns the score of the position
+ * - the higher the score, the better the position
+ * - the score is calculated as the sum of the score difference, mobility and stability
+ */
 int evaluatePosition(Position *pos, char color,
 					 int difweight, int mobilityweight, int stabilityweight) {
 	int score = 0;
@@ -94,6 +104,16 @@ int evaluatePosition(Position *pos, char color,
     return score;
 }
 
+/*
+ * Minimax algorithm 
+ * - pos: current position
+ * - depth: depth of the search tree
+ * - alpha: alpha value for pruning
+ * - beta: beta value for pruning
+ * - maximizingPlayer: player that is curently being simulated
+ * - originalPlayer: player that started the minimax algorithm
+ * - returns the score of the position
+ */
 int minimax(Position *pos, int depth, int alpha, int beta, char maximizingPlayer, char originalPlayer) {
     if (depth == 0 || !canMove(pos, WHITE) && !canMove(pos, BLACK)) {
         return evaluatePosition(pos, originalPlayer,10,5,3);
@@ -132,6 +152,10 @@ int minimax(Position *pos, int depth, int alpha, int beta, char maximizingPlayer
     }
 }
 
+/*
+ * Play function for the minimax algorithm
+ * - plays the best move according to the minimax algorithm
+ */
 void playMinmax( void ) {
     int bestValue = -100000;
     Move bestMove = {{NULL_MOVE, NULL_MOVE}, myColor};
@@ -258,7 +282,7 @@ int main( int argc, char ** argv )
 
 	return 0;
 }
-/*
+/* ab - prune Validity test results
  *        B B B B W W W W        *        B B B B W W W W        *
  *       B B B B B B B B B       *       B B B B B B B B B       *
  *      B W W B W W W W B B      *      B W W B W W W W B B      *
