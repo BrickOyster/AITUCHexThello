@@ -20,6 +20,12 @@ Minimax algorithm
 Advanced evaluation function
 ab pruning
 
+Πηγές
+Othelo game
+Minimax wiki
+Evaluation function info
+ab - pruning
+
 1
 
 Μinimax algorithm
